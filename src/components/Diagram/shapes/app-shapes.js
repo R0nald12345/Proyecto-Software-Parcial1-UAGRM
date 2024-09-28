@@ -184,7 +184,27 @@ const cache = new Map();
           connector: {
             name: "rounded",
           },
-          labels: [],
+          labels: [
+            {
+              position: 0.5, // Center of the link
+              attrs: {
+                  text: { text: 'to the' }
+              }
+          },
+          {
+              position: 0.1, // Near source
+              attrs: {
+                  text: { text: '1..0', fill: '#000' }
+              }
+          },
+          {
+              position: 0.9, // Near target
+              attrs: {
+                  text: { text: '1..0', fill: '#000' }
+              }
+          }
+
+          ],
           attrs: {
             line: {
               stroke: "#8f8f8f",
@@ -233,7 +253,7 @@ const cache = new Map();
             line: {
               targetMarker: {
                 type: "path",
-                fill: "#8f8f8f",
+                fill: "#131e29",
                 "stroke-width": 2,
                 d: "M 10 -4 0 0 10 4 20 0 z",
               },
@@ -245,8 +265,30 @@ const cache = new Map();
     }
   }
   app.Aggregation = Aggregation;
-  
 
+
+  class Association extends Link {  
+    defaults() {
+      return joint.util.defaultsDeep(
+        {
+          type: "app.Association",
+          attrs: {
+            line: {
+              targetMarker: {
+                type: "path",
+                fill: "none",
+                "stroke-width": 2,
+                d: "M 10 -4 0 0 10 4 20 0 z",
+              },
+            },
+          },
+        },
+        super.defaults()
+      );
+    }
+  }
+  
+  app.Association = Association;
 
 })(app || (app = {}));
 

@@ -69,7 +69,7 @@ export class StencilService {
             standard: [
                 {
                     type: 'standard.HeaderedRectangle',
-                    size: { width: 90, height: 54 },
+                    size: { width: 95, height: 80 },
                     attrs: {
                         root: {
                             dataTooltip: 'Rectangle with header',
@@ -111,6 +111,69 @@ export class StencilService {
                             fontSize: 14,
                             strokeWidth: 0,
                             y: 10
+                        }
+                    }
+                },
+                {
+                    type: 'app.Link', // Tipo definido en app-shapes.js
+                    source: { x: 120, y: 0 },
+                    target: { x: 230, y: 100 },
+                    attrs: {
+                        line: {
+                            stroke: '#8f8f8f',
+                            strokeWidth: 2,
+                            targetMarker: {
+                                'type': 'path',
+                                'd': 'M 10 -5 0 0 10 5 Z',
+                                'fill': '#8f8f8f'
+                            }
+                        },
+                        root: {
+                            dataTooltip: 'Link',
+                            dataTooltipPosition: 'left',
+                            dataTooltipPositionSelector: '.joint-stencil'
+                        }
+                    }
+                },
+                {
+                    type: 'app.Association', // Tipo definido en app-shapes.js
+                    source: { x: 10, y: 100 },
+                    target: { x: 100, y: 250 },
+                    attrs: {
+                        line: {
+                            stroke: '#8f8f8f',
+                            strokeWidth: 2,
+                            targetMarker: {
+                                'type': 'path',
+                                'd': 'M 10 -5 0 0 10 5 Z',
+                                'fill': 'none'
+                            }
+                        },
+                        root: {
+                            dataTooltip: 'Link',
+                            dataTooltipPosition: 'left',
+                            dataTooltipPositionSelector: '.joint-stencil'
+                        }
+                    }
+                },
+                {
+                    type: 'app.Aggregation', // Tipo definido en app-shapes.js
+                    source: { x: 100, y: 100 },
+                    target: { x: 0, y: 0 },
+                    attrs: {
+                        line: {
+                            stroke: '#8f8f8f',
+                            strokeWidth: 2,
+                            targetMarker: {
+                                'type': 'path',
+                                'd': 'M 10 -4 0 0 10 4 20 0 z',
+                                'fill': '#131e29'
+                            }
+                        },
+                        root: {
+                            dataTooltip: 'Link',
+                            dataTooltipPosition: 'left',
+                            dataTooltipPositionSelector: '.joint-stencil'
                         }
                     }
                 }

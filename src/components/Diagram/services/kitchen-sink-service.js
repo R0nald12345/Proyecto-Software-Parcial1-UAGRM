@@ -1,38 +1,28 @@
-/*! JointJS+ v4.0.1 - HTML5 Diagramming Framework - TRIAL VERSION
+// Importación de librerías y módulos necesarios
+import * as joint from "@joint/plus"; // Importa todo desde @joint/plus y lo asigna al alias joint
+import * as appShapes from "../shapes/app-shapes"; // Importa todo desde el archivo app-shapes y lo asigna al alias appShapes
+import { DirectedGraph } from "@joint/layout-directed-graph"; // Importa específicamente DirectedGraph desde @joint/layout-directed-graph
 
-Copyright (c) 2024 client IO
-
- 2024-09-10 
-
-
-This Source Code Form is subject to the terms of the JointJS+ Trial License
-, v. 2.0. If a copy of the JointJS+ License was not distributed with this
-file, You can obtain one at https://www.jointjs.com/license
- or from the JointJS+ archive as was distributed by client IO. See the LICENSE file.*/
-
-import * as joint from "@joint/plus";
-import * as appShapes from "../shapes/app-shapes";
-import { DirectedGraph } from "@joint/layout-directed-graph";
-
-
-
+// Definición de la clase KitchenSinkService
 class KitchenSinkService {
+  // Constructor de la clase
   constructor(
-    el,
-    stencilService,
-    toolbarService,
-    inspectorService,
-    haloService,
-    keyboardService
+    el, // Elemento del DOM
+    stencilService, // Servicio de stencil
+    toolbarService, // Servicio de barra de herramientas
+    inspectorService, // Servicio de inspector
+    haloService, // Servicio de halo (ayudas visuales y herramientas)
+    keyboardService // Servicio de teclado
   ) {
-    this.el = el;
+    this.el = el; // Asigna el elemento del DOM a una variable de la instancia
 
-    // apply current joint js theme
-    const view = new joint.mvc.View({ el });
+    // Aplica el tema actual de JointJS
+    const view = new joint.mvc.View({ el }); // Crea una nueva vista usando JointJS y le pasa el elemento del DOM
     view.delegateEvents({
-      'mouseup input[type="range"]': (evt) => evt.target.blur(),
+      'mouseup input[type="range"]': (evt) => evt.target.blur(), // Elimina el foco de cualquier input[type="range"] cuando se suelta el ratón
     });
 
+    // Asignación de servicios a variables de instancia
     this.stencilService = stencilService;
     this.toolbarService = toolbarService;
     this.inspectorService = inspectorService;
@@ -40,39 +30,44 @@ class KitchenSinkService {
     this.keyboardService = keyboardService;
   }
 
+  // Método para iniciar Rappid con las configuraciones y servicios necesarios
   startRappid() {
-    joint.setTheme("modern");
+    joint.setTheme("modern"); // Configura el tema de JointJS como "modern"
 
-    this.initializePaper();
-    this.initializeStencil();
-    this.initializeSelection();
-    this.initializeToolsAndInspector();
-    this.initializeNavigator();
-    this.initializeToolbar();
-    this.initializeKeyboardShortcuts();
-    this.initializeTooltips();
+    this.initializePaper(); // Inicializa el papel (lienzo)
+    this.initializeStencil(); // Inicializa el stencil (componentes de ayuda)
+    this.initializeSelection(); // Inicializa la selección de elementos
+    this.initializeToolsAndInspector(); // Inicializa herramientas e inspector
+    this.initializeNavigator(); // Inicializa el navegador
+    this.initializeToolbar(); // Inicializa la barra de herramientas
+    this.initializeKeyboardShortcuts(); // Inicializa atajos de teclado
+    this.initializeTooltips(); // Inicializa tooltips (ayudas visuales emergentes)
   }
 
+  // Método para detener y limpiar Rappid
   stopRappid() {
-    this.paper.remove();
-    this.paperScroller.remove();
-    this.stencilService.stencil.remove();
-    this.selection.remove();
-    this.toolbarService.toolbar.remove();
-    this.keyboardService.keyboard.stopListening();
-    this.tooltip.remove();
+    this.paper.remove(); // Elimina el papel
+    this.paperScroller.remove(); // Elimina el papel deslizante
+    this.stencilService.stencil.remove(); // Elimina el stencil
+    this.selection.remove(); // Elimina la selección
+    this.toolbarService.toolbar.remove(); // Elimina la barra de herramientas
+    this.keyboardService.keyboard.stopListening(); // Detiene la escucha de eventos del teclado
+    this.tooltip.remove(); // Elimina los tooltips
   }
 
+  // Método para inicializar el papel (lienzo)
   initializePaper() {
     const graph = (this.graph = new joint.dia.Graph(
       {},
       {
-        cellNamespace: appShapes,
+        cellNamespace: appShapes, // Usa las formas definidas en appShapes
       }
     ));
 
+    // Gestión de comandos para deshacer/rehacer
     this.commandManager = new joint.dia.CommandManager({ graph: graph });
 
+    // Configuración del papel
     const paper = (this.paper = new joint.dia.Paper({
       width: 1000,
       height: 1000,
@@ -80,17 +75,23 @@ class KitchenSinkService {
       drawGrid: true,
       model: graph,
       cellViewNamespace: appShapes,
+//------------------------------
 
 
-      // defaultLink: new appShapes.app.Link(),
-      defaultLink: new appShapes.app.Aggregation(),
+      defaultLink: new appShapes.app.Link(), //Link Herencia
+      // defaultLink: new appShapes.app.Aggregation(), //Link Aggregation
+      // defaultLink: new appShapes.app.Association(), //Link Asociacion
 
       defaultConnectionPoint: appShapes.app.Link.connectionPoint,
-      interactive: { linkMove: false },
+      interactive: { 
+          linkMove: false, 
+          vertexAdd: true,
+      },
       async: true,
       sorting: joint.dia.Paper.sorting.APPROX,
     }));
 
+    // Añade eventos para menús contextuales (clic derecho)
     paper.on("blank:contextmenu", (evt) => {
       this.renderContextToolbar({ x: evt.clientX, y: evt.clientY });
     });
@@ -101,8 +102,10 @@ class KitchenSinkService {
       ]);
     });
 
+    // Añade líneas de ajustes para mejorar la alineación de elementos
     this.snaplines = new joint.ui.Snaplines({ paper: paper });
 
+    // Configuración del papel deslizante
     const paperScroller = (this.paperScroller = new joint.ui.PaperScroller({
       paper,
       autoResizePaper: true,
@@ -110,9 +113,11 @@ class KitchenSinkService {
       cursor: "grab",
     }));
 
+    // Renderiza paperScroller en el contenedor especificado
     this.renderPlugin(".paper-container", paperScroller);
     paperScroller.render().center();
 
+    // Añade eventos para el papel y el papel deslizante
     paper.on("paper:pan", (evt, tx, ty) => {
       evt.preventDefault();
       paperScroller.el.scrollLeft += tx;
@@ -132,26 +137,37 @@ class KitchenSinkService {
     });
   }
 
+  // Inicializa el Stencil (panel de componentes)
+
   initializeStencil() {
     const { stencilService, paperScroller, snaplines } = this;
+
+    // Crea el stencil y lo asocia con el paperScroller y las líneas de ajuste
     stencilService.create(paperScroller, snaplines);
 
+    // Renderiza el stencil en el contenedor especificado
     this.renderPlugin(".stencil-container", stencilService.stencil);
+    // Configura las formas en el stencil
     stencilService.setShapes();
 
+     // Evento para capturar cuando se suelta un elemento en el lienzo
     stencilService.stencil.on("element:drop", (elementView) => {
+       // Resetea la selección y añade el nuevo elemento
       this.selection.collection.reset([elementView.model]);
     });
   }
 
+  // Inicializa la selección de elementos
   initializeSelection() {
-    this.clipboard = new joint.ui.Clipboard();
+    this.clipboard = new joint.ui.Clipboard(); // Inicializa el portapapeles
     this.selection = new joint.ui.Selection({
-      paper: this.paperScroller,
+      paper: this.paperScroller, // Asocia el papel deslizante
       useModelGeometry: true,
       translateConnectedLinks:
         joint.ui.Selection.ConnectedLinksTranslation.SUBGRAPH,
     });
+
+    // Añade eventos para gestionar cuando la selección cambia
     this.selection.collection.on(
       "reset add remove",
       this.onSelectionChange.bind(this)
@@ -159,8 +175,8 @@ class KitchenSinkService {
 
     const keyboard = this.keyboardService.keyboard;
 
-    // Initiate selecting when the user grabs the blank area of the paper while the Shift key is pressed.
-    // Otherwise, initiate paper pan.
+    // Inicia la selección cuando se hace clic en un área en blanco del papel
+    //mientras se mantiene presionada la tecla Shift.
     this.paper.on("blank:pointerdown", (evt, x, y) => {
       if (keyboard.isActive("shift", evt)) {
         this.selection.startSelecting(evt);
@@ -171,7 +187,7 @@ class KitchenSinkService {
       }
     });
 
-    // Initiate selecting when the user grabs a cell while shift is pressed.
+    // Inicia la selección cuando se hace clic en una celda mientras se mantiene presionada la tecla Shift.
     this.paper.on(
       "cell:pointerdown element:magnet:pointerdown",
       (cellView, evt) => {
@@ -182,6 +198,7 @@ class KitchenSinkService {
       }
     );
 
+    // Selecciona un elemento si la tecla CTRL/Meta está presionada mientras se hace clic en el elemento.
     this.paper.on("element:pointerdown", (elementView, evt) => {
       // Select an element if CTRL/Meta key is pressed while the element is clicked.
       if (keyboard.isActive("ctrl meta", evt)) {
@@ -189,6 +206,7 @@ class KitchenSinkService {
       }
     });
 
+    // Si un elemento se elimina del gráfico, se elimina también de la selección.
     this.graph.on("remove", (cell) => {
       // If element is removed from the graph, remove from the selection too.
       if (this.selection.collection.has(cell)) {
@@ -198,6 +216,7 @@ class KitchenSinkService {
       }
     });
 
+    // Añade eventos adicionales para gestionar la selección de elementos.
     this.selection.on(
       "selection-box:pointerdown",
       (elementView, evt) => {
@@ -224,6 +243,7 @@ class KitchenSinkService {
     );
   }
 
+  // Método llamado cuando la selección cambia
   onSelectionChange() {
     const { paper, selection } = this;
     const { collection } = selection;
@@ -243,6 +263,7 @@ class KitchenSinkService {
     }
   }
 
+  // Selecciona la celda primaria y aplica las herramientas apropiadas
   selectPrimaryCell(cellView) {
     const cell = cellView.model;
     if (cell.isElement()) {
@@ -250,9 +271,10 @@ class KitchenSinkService {
     } else {
       this.selectPrimaryLink(cellView);
     }
-    this.inspectorService.create(cell);
+    this.inspectorService.create(cell); // Crea un inspector para la celda primaria
   }
 
+  // Aplica las herramientas a un elemento primario
   selectPrimaryElement(elementView) {
     const element = elementView.model;
 
@@ -263,40 +285,48 @@ class KitchenSinkService {
       allowOrthogonalResize: element.get("allowOrthogonalResize") !== false,
     }).render();
 
-    this.haloService.create(elementView);
+    //--------------------------------------------------------------------------------------------------------------------
+
+    //I M P O R T A N T E     C O D I G O   P A R A   C O M P R E N D E R
+    this.haloService.create(elementView); // Crea un halo alrededor del elemento
   }
 
+  // Aplica las herramientas a un enlace primario
   selectPrimaryLink(linkView) {
     const ns = joint.linkTools;
     const toolsView = new joint.dia.ToolsView({
       name: "link-pointerdown",
       tools: [
-        new ns.Vertices(),
-        new ns.SourceAnchor(),
-        new ns.TargetAnchor(),
-        new ns.SourceArrowhead(),
-        new ns.TargetArrowhead(),
-        new ns.Segments(),
-        new ns.Boundary({ padding: 15 }),
-        new ns.Remove({ offset: -20, distance: 40 }),
+        new ns.Vertices(), // Herramienta para manejar vértices
+        new ns.SourceAnchor(), // Herramienta para el ancla de origen
+        new ns.TargetAnchor(), // Herramienta para el ancla de destino
+        new ns.SourceArrowhead(), // Herramienta para la flecha de origen
+        new ns.TargetArrowhead(), // Herramienta para la flecha de destino
+        new ns.Segments(), // Herramienta para manejar segmentos
+        new ns.Boundary({ padding: 15 }), // Herramienta para el límite con margen
+        new ns.Remove({ offset: -20, distance: 40 }), // Herramienta de eliminación de enlace
       ],
     });
 
-    linkView.addTools(toolsView);
+    linkView.addTools(toolsView); // Añade las herramientas al enlace
   }
 
+  // Initialice las herramientas y el inspector
   initializeToolsAndInspector() {
+    // Evento para manejar cuando se suelta el clic en una celda
     this.paper.on("cell:pointerup", (cellView) => {
       const cell = cellView.model;
       const { collection } = this.selection;
       if (collection.includes(cell)) {
         return;
       }
+      // Reinicia la colección con el nuevo elemento seleccionado
       collection.reset([cell]);
     });
 
+    // Evento cuando el ratón entra en un enlace
     this.paper.on("link:mouseenter", (linkView) => {
-      // Open tool only if there is none yet
+      // Sólo abre la herramienta si no hay ninguna ya
       if (linkView.hasTools()) {
         return;
       }
@@ -314,13 +344,15 @@ class KitchenSinkService {
       linkView.addTools(toolsView);
     });
 
+    // Evento cuando el ratón sale de un enlace
     this.paper.on("link:mouseleave", (linkView) => {
-      // Remove only the hover tool, not the pointerdown tool
+      // Remueve sólo la herramienta de hover, no la de pointerdown
       if (linkView.hasTools("link-hover")) {
         linkView.removeTools();
       }
     });
 
+    // Evento cuando hay cambios en el gráfico
     this.graph.on("change", (cell, opt) => {
       if (!cell.isLink() || !opt.inspector) {
         return;
@@ -332,10 +364,12 @@ class KitchenSinkService {
         tools: [new ns.Boundary({ padding: 15 })],
       });
 
+      // Renderiza el navegador en el contenedor especificado
       cell.findView(this.paper).addTools(toolsView);
     });
   }
 
+  // Inicializa el navegador
   initializeNavigator() {
     const navigator = (this.navigator = new joint.ui.Navigator({
       width: 240,
@@ -356,9 +390,12 @@ class KitchenSinkService {
     this.renderPlugin(".navigator-container", navigator);
   }
 
+  // Inicializa la barra de herramientas
   initializeToolbar() {
+    // Crea la barra de herramientas con servicios necesarios
     this.toolbarService.create(this.commandManager, this.paperScroller);
 
+    // Define eventos específicos para los botones de la barra de herramientas
     this.toolbarService.toolbar.on({
       "svg:pointerclick": this.openAsSVG.bind(this),
       "png:pointerclick": this.openAsPNG.bind(this),
@@ -372,9 +409,11 @@ class KitchenSinkService {
       "grid-size:change": this.paper.setGridSize.bind(this.paper),
     });
 
+    // Renderiza la barra de herramientas en el contenedor especificado
     this.renderPlugin(".toolbar-container", this.toolbarService.toolbar);
   }
 
+  // Renderiza la barra de herramientas contextual
   renderContextToolbar(point, cellsToCopy = []) {
     this.selection.collection.reset(cellsToCopy);
     const contextToolbar = new joint.ui.ContextToolbar({
@@ -401,12 +440,14 @@ class KitchenSinkService {
       ],
     });
 
+    // Evento para copiar elementos seleccionados
     contextToolbar.on("action:copy", () => {
       contextToolbar.remove();
 
       this.clipboard.copyElements(cellsToCopy, this.graph);
     });
 
+    // Evento para pegar elementos desde el portapapeles
     contextToolbar.on("action:paste", () => {
       contextToolbar.remove();
       const pastedCells = this.clipboard.pasteCellsAtPoint(
@@ -416,13 +457,13 @@ class KitchenSinkService {
 
       const elements = pastedCells.filter((cell) => cell.isElement());
 
-      // Make sure pasted elements get selected immediately. This makes the UX better as
-      // the user can immediately manipulate the pasted elements.
+      // Asegura que los elementos pegados se seleccionan inmediatamente
       this.selection.collection.reset(elements);
     });
     contextToolbar.render();
   }
 
+  // Aplica una acción sobre la selección actual
   applyOnSelection(method) {
     this.graph.startBatch("selection");
     this.selection.collection.models.forEach(function (model) {
@@ -431,6 +472,7 @@ class KitchenSinkService {
     this.graph.stopBatch("selection");
   }
 
+  // Activa o desactiva las líneas de ajuste
   changeSnapLines(checked) {
     if (checked) {
       this.snaplines.enable();
@@ -439,6 +481,7 @@ class KitchenSinkService {
     }
   }
 
+  // Inicializa los atajos de teclado
   initializeKeyboardShortcuts() {
     this.keyboardService.create(
       this.graph,
@@ -449,6 +492,7 @@ class KitchenSinkService {
     );
   }
 
+  // Inicializa los tooltips (ayudas visuales emergentes)
   initializeTooltips() {
     this.tooltip = new joint.ui.Tooltip({
       rootTarget: document.body,
@@ -458,61 +502,67 @@ class KitchenSinkService {
     });
   }
 
+  // Abre el lienzo como una imagen SVG
   openAsSVG() {
-    this.paper.hideTools();
+    this.paper.hideTools(); // Oculta las herramientas del papel
     joint.format.toSVG(
-      this.paper,
+      this.paper, // Convierte el papel a SVG
       (svg) => {
+        // Crea y abre un lightbox con la imagen SVG resultante
         new joint.ui.Lightbox({
           image: "data:image/svg+xml," + encodeURIComponent(svg),
-          downloadable: true,
-          fileName: "Rappid",
+          downloadable: true, // Permite descargar la imagen
+          fileName: "Rappid", // Nombre predeterminado del archivo descargado
         }).open();
-        this.paper.showTools();
+        this.paper.showTools(); // Muestra las herramientas del papel una vez que se ha generado la imagen
       },
       {
-        preserveDimensions: true,
-        convertImagesToDataUris: true,
-        useComputedStyles: false,
-        grid: true,
+        preserveDimensions: true, // Preserva las dimensiones originales del papel
+        convertImagesToDataUris: true, // Convierte las imágenes a Data URIs
+        useComputedStyles: false, // No usa estilos calculados
+        grid: true, // Incluye la cuadrícula en la exportación
       }
     );
   }
 
+  // Abre el lienzo como una imagen PNG
   openAsPNG() {
-    this.paper.hideTools();
+    this.paper.hideTools(); // Oculta las herramientas del papel
     joint.format.toPNG(
-      this.paper,
+      this.paper, // Convierte el papel a PNG
       (dataURL) => {
+        // Crea y abre un lightbox con la imagen PNG resultante
         new joint.ui.Lightbox({
           image: dataURL,
-          downloadable: true,
-          fileName: "Rappid",
+          downloadable: true, // Permite descargar la imagen
+          fileName: "Rappid", // Nombre predeterminado del archivo descargado
         }).open();
-        this.paper.showTools();
+        this.paper.showTools(); // Muestra las herramientas del papel una vez que se ha generado la imagen
       },
       {
-        padding: 10,
-        useComputedStyles: false,
-        grid: true,
+        padding: 10, // Padding alrededor del contenido convertido
+        useComputedStyles: false, // No usa estilos calculados
+        grid: true, // Incluye la cuadrícula en la exportación
       }
     );
   }
-
+  // Organiza el gráfico usando el algoritmo de gráfico dirigido
   layoutDirectedGraph() {
     DirectedGraph.layout(this.graph, {
-      setVertices: true,
-      rankDir: "TB",
-      marginX: 100,
-      marginY: 100,
+      setVertices: true, // Ajusta los vértices
+      rankDir: "TB", // Dirección del rank de arriba a abajo (Top to Bottom)
+      marginX: 100, // Margen horizontal
+      marginY: 100, // Margen vertical
     });
 
+    // Centra el contenido del papel usando la geometría del modelo
     this.paperScroller.centerContent({ useModelGeometry: true });
   }
-
+  // Renderiza un plugin en el selector especificado
   renderPlugin(selector, plugin) {
+    // Agrega el elemento del plugin al DOM
     this.el.querySelector(selector).appendChild(plugin.el);
-    plugin.render();
+    plugin.render(); // Renderiza el plugin
   }
 }
 
