@@ -129,7 +129,7 @@ export class StencilService {
                             }
                         },
                         root: {
-                            dataTooltip: 'Link',
+                            dataTooltip: 'Link Generalización',
                             dataTooltipPosition: 'left',
                             dataTooltipPositionSelector: '.joint-stencil'
                         }
@@ -150,16 +150,16 @@ export class StencilService {
                             }
                         },
                         root: {
-                            dataTooltip: 'Link',
+                            dataTooltip: 'Link Asociación',
                             dataTooltipPosition: 'left',
                             dataTooltipPositionSelector: '.joint-stencil'
                         }
                     }
                 },
                 {
-                    type: 'app.Aggregation', // Tipo definido en app-shapes.js
-                    source: { x: 100, y: 100 },
-                    target: { x: 0, y: 0 },
+                    type: 'app.Composition', // Tipo definido en app-shapes.js
+                    target: { x: 70, y: 100 },
+                    source: { x: 163, y: 250 },
                     attrs: {
                         line: {
                             stroke: '#8f8f8f',
@@ -167,11 +167,35 @@ export class StencilService {
                             targetMarker: {
                                 'type': 'path',
                                 'd': 'M 10 -4 0 0 10 4 20 0 z',
-                                'fill': '#131e29'
+                                'fill': '#8f8f8f'
                             }
                         },
                         root: {
-                            dataTooltip: 'Link',
+                            dataTooltip: 'Link Composición',
+                            dataTooltipPosition: 'left',
+                            dataTooltipPositionSelector: '.joint-stencil'
+                        }
+                    }
+                },
+                {
+                    type: 'app.Aggregation', // Tipo definido en app-shapes.js
+                    target: { x: 120, y: 100 },
+                    source: { x: 230, y: 250 },
+                    attrs: {
+                        line: {
+                            stroke: '#8f8f8f',
+                            strokeWidth: 2,
+                            targetMarker: {
+                                'type': 'path',
+                                'd': 'M 10 -4 0 0 10 4 20 0 z',
+                                'fill': 'none',
+                                'stroke-width': 2,
+                                'refX': -120,  // Ajusta la posición del cabezal a lo largo del eje X
+                                'refY': 3  // Ajusta la posición del cabezal a lo largo del eje Y
+                            }
+                        },
+                        root: {
+                            dataTooltip: 'Link Agregación',
                             dataTooltipPosition: 'left',
                             dataTooltipPositionSelector: '.joint-stencil'
                         }

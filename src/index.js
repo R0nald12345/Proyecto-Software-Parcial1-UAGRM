@@ -17,10 +17,12 @@ import reportWebVitals from './reportWebVitals';
 
 import './index.css';
 import '@joint/plus/joint-plus.css';
+import Login from './components/auth/Login';
 
 ReactDOM.render(
     <React.StrictMode>
         <App />
+        {/* <Login/> */}
     </React.StrictMode>,
     document.getElementById('root')
 );

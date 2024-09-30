@@ -3,8 +3,8 @@
   "version": "4.0.1",
   "private": true,
   "dependencies": {
-    "@joint/plus": "file:../../../build/package/joint-plus.tgz",
     "@joint/layout-directed-graph": "4.0.3",
+    "@joint/plus": "file:../../../build/package/joint-plus.tgz",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "5.0.0",
@@ -27,5 +27,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.13"
   }
 }

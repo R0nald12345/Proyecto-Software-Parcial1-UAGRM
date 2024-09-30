@@ -10,7 +10,10 @@ This Source Code Form is subject to the terms of the JointJS+ Trial License
 file, You can obtain one at https://www.jointjs.com/license
  or from the JointJS+ archive as was distributed by client IO. See the LICENSE file.*/
 
-
+ @tailwind base;
+ @tailwind components;
+ @tailwind utilities;
+ 
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',

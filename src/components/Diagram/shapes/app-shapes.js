@@ -147,6 +147,7 @@ const cache = new Map();
             height: "calc(h + 10)",
             x: "calc(x - 5)",
             y: "calc(y - 5)",
+            
           },
         },
       };
@@ -253,10 +254,19 @@ const cache = new Map();
             line: {
               targetMarker: {
                 type: "path",
-                fill: "#131e29",
+                fill: "none",
+                stroke: "#8f8f8f", // borde negro
                 "stroke-width": 2,
                 d: "M 10 -4 0 0 10 4 20 0 z",
+                'refX': -10,  // Ajusta la posición del cabezal a lo largo del eje X
+                'refY': 0  // Ajusta la posición del cabezal a lo largo del eje Y
               },
+              sourceMarker: {
+                'type': 'path',
+                'd': 'M 0 0 0 0',  // sin marcador en el inicio
+                'fill': 'none',
+                'stroke': 'none'
+              }
             },
           },
         },
@@ -265,6 +275,29 @@ const cache = new Map();
     }
   }
   app.Aggregation = Aggregation;
+
+  class Composition extends Link {
+    
+    defaults() {
+      return joint.util.defaultsDeep(
+        {
+          type: "app.Aggregation",
+          attrs: {
+            line: {
+              targetMarker: {
+                type: "path",
+                fill: "#8f8f8f",
+                "stroke-width": 2,
+                d: "M 10 -4 0 0 10 4 20 0 z",
+              }
+            },
+          },
+        },
+        super.defaults()
+      );
+    }
+  }
+  app.Composition = Composition;
 
 
   class Association extends Link {  
