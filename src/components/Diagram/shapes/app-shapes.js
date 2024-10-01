@@ -186,24 +186,24 @@ const cache = new Map();
             name: "rounded",
           },
           labels: [
-            {
-              position: 0.5, // Center of the link
-              attrs: {
-                  text: { text: 'to the' }
-              }
-          },
-          {
-              position: 0.1, // Near source
-              attrs: {
-                  text: { text: '1..0', fill: '#000' }
-              }
-          },
-          {
-              position: 0.9, // Near target
-              attrs: {
-                  text: { text: '1..0', fill: '#000' }
-              }
-          }
+          //   {
+          //     position: 0.5, // Center of the link
+          //     attrs: {
+          //         text: { text: 'to the' }
+          //     }
+          // },
+          // {
+          //     position: 0.1, // Near source
+          //     attrs: {
+          //         text: { text: '1..0', fill: '#000' }
+          //     }
+          // },
+          // {
+          //     position: 0.9, // Near target
+          //     attrs: {
+          //         text: { text: '1..0', fill: '#000' }
+          //     }
+          // }
 
           ],
           attrs: {
