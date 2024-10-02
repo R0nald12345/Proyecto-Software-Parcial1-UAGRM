@@ -1,173 +1,200 @@
-// Importación de librerías y módulos necesarios
-import * as joint from "@joint/plus"; // Importa todo desde @joint/plus y lo asigna al alias joint
-import * as appShapes from "../shapes/app-shapes"; // Importa todo desde el archivo app-shapes y lo asigna al alias appShapes
-import { DirectedGraph } from "@joint/layout-directed-graph"; // Importa específicamente DirectedGraph desde @joint/layout-directed-graph
+import * as joint from "@joint/plus";
+import * as appShapes from "../shapes/app-shapes";
+import { DirectedGraph } from "@joint/layout-directed-graph";
+import { db } from "../../../firebase/config";
+import { collection, setDoc, onSnapshot, doc } from "firebase/firestore";
 
 // Definición de la clase KitchenSinkService
+// Constructor de la clase
 class KitchenSinkService {
-  // Constructor de la clase
   constructor(
-    el, // Elemento del DOM
-    stencilService, // Servicio de stencil
-    toolbarService, // Servicio de barra de herramientas
-    inspectorService, // Servicio de inspector
-    haloService, // Servicio de halo (ayudas visuales y herramientas)
-    keyboardService // Servicio de teclado
+    el,
+    stencilService,
+    toolbarService,
+    inspectorService,
+    haloService,
+    keyboardService
   ) {
-    this.el = el; // Asigna el elemento del DOM a una variable de la instancia
-
-    // Aplica el tema actual de JointJS
-    const view = new joint.mvc.View({ el }); // Crea una nueva vista usando JointJS y le pasa el elemento del DOM
+    this.el = el;
+    const view = new joint.mvc.View({ el });
     view.delegateEvents({
-      'mouseup input[type="range"]': (evt) => evt.target.blur(), // Elimina el foco de cualquier input[type="range"] cuando se suelta el ratón
+      'mouseup input[type="range"]': (evt) => evt.target.blur(),
     });
 
-    // Asignación de servicios a variables de instancia
     this.stencilService = stencilService;
     this.toolbarService = toolbarService;
     this.inspectorService = inspectorService;
     this.haloService = haloService;
     this.keyboardService = keyboardService;
+    this.db = db; // Asigno la instancia de Firestore
   }
 
   // Método para iniciar Rappid con las configuraciones y servicios necesarios
   startRappid() {
-    joint.setTheme("modern"); // Configura el tema de JointJS como "modern"
+    joint.setTheme("modern");
 
-    this.initializePaper(); // Inicializa el papel (lienzo)
-    this.initializeStencil(); // Inicializa el stencil (componentes de ayuda)
-    this.initializeSelection(); // Inicializa la selección de elementos
-    this.initializeToolsAndInspector(); // Inicializa herramientas e inspector
-    this.initializeNavigator(); // Inicializa el navegador
-    this.initializeToolbar(); // Inicializa la barra de herramientas
-    this.initializeKeyboardShortcuts(); // Inicializa atajos de teclado
-    this.initializeTooltips(); // Inicializa tooltips (ayudas visuales emergentes)
+    this.initializePaper();
+    this.initializeStencil();
+    this.initializeSelection();
+    this.initializeToolsAndInspector();
+    this.initializeNavigator();
+    this.initializeToolbar();
+    this.initializeKeyboardShortcuts();
+    this.initializeTooltips();
+    this.setupRealtimeListeners(); // Asegúrate de configurar los listeners en tiempo real
   }
 
-  // Método para detener y limpiar Rappid
-  stopRappid() {
-    this.paper.remove(); // Elimina el papel
-    this.paperScroller.remove(); // Elimina el papel deslizante
-    this.stencilService.stencil.remove(); // Elimina el stencil
-    this.selection.remove(); // Elimina la selección
-    this.toolbarService.toolbar.remove(); // Elimina la barra de herramientas
-    this.keyboardService.keyboard.stopListening(); // Detiene la escucha de eventos del teclado
-    this.tooltip.remove(); // Elimina los tooltips
-  }
+  // Método para configurar los listeners en tiempo real
+  setupRealtimeListeners() {
+    const docRef = collection(this.db, "graphs");
 
-  // Método para inicializar el papel (lienzo)
-  initializePaper() {
-    const graph = (this.graph = new joint.dia.Graph(
-      {},
-      {
-        cellNamespace: appShapes, // Usa las formas definidas en appShapes
-      }
-    ));
+    onSnapshot(
+      docRef,
+      (snapshot) => {
+        console.log("Snapshot received", snapshot);
+        this.graph.clear(); // Limpiar el gráfico antes de aplicar los cambios
 
-    // Gestión de comandos para deshacer/rehacer
-    this.commandManager = new joint.dia.CommandManager({ graph: graph });
+        snapshot.forEach((doc) => {
+          const cellData = doc.data();
+          console.log("Doc data", cellData);
+          const cell = this.graph.getCell(cellData.id);
 
-    // Configuración del papel
-    const paper = (this.paper = new joint.dia.Paper({
-      width: 1000,
-      height: 1000,
-      gridSize: 10,
-      drawGrid: true,
-      model: graph,
-      cellViewNamespace: appShapes,
-//------------------------------
+          if (cell) {
+            cell.set(cellData);
+          } else {
+            if (cellData.type === "app.Link") {
+              this.graph.addCell(new appShapes.app.Link(cellData));
+            } else {
+              this.graph.addCell(cellData);
+            }
+          }
+        });
 
+        snapshot.docChanges().forEach((change) => {
+          console.log("Doc change", change);
+          const cellData = change.doc.data();
 
-      defaultLink: new appShapes.app.Link(), //Link Herencia
-      // defaultLink: new appShapes.app.Aggregation(), //Link Aggregation
-      // defaultLink: new appShapes.app.Association(), //Link Asociacion
+          if (change.type === "added" || change.type === "modified") {
+            let cell = this.graph.getCell(cellData.id);
 
-      defaultConnectionPoint: appShapes.app.Link.connectionPoint,
-      interactive: { 
-          linkMove: false, 
-          vertexAdd: true,
+            if (cell) {
+              cell.set(cellData);
+            } else {
+              if (cellData.type === "app.Link") {
+                this.graph.addCell(new appShapes.app.Link(cellData));
+              } else {
+                this.graph.addCell(cellData);
+              }
+            }
+          }
+
+          if (change.type === "removed") {
+            let cell = this.graph.getCell(cellData.id);
+            if (cell) {
+              cell.remove();
+            }
+          }
+        });
       },
-      async: true,
-      sorting: joint.dia.Paper.sorting.APPROX,
+      (error) => {
+        console.error("Error receiving snapshot: ", error);
+      }
+    );
+}
+
+
+  // Método para guardar cambios en Firestore
+  async saveGraphToFirestore(cell, opt) {
+    if (opt.ignoreSave) return;
+
+    const docRef = doc(collection(this.db, "graphs"), cell.id);
+
+    await setDoc(docRef, {
+      id: cell.id,
+      ...cell.toJSON(),
+    });
+  }
+
+  initializePaper() {
+    const graph = (this.graph = new joint.dia.Graph({}, { cellNamespace: appShapes }));
+    this.commandManager = new joint.dia.CommandManager({ graph });
+
+    const paper = (this.paper = new joint.dia.Paper({
+        width: 1000,
+        height: 1000,
+        gridSize: 10,
+        drawGrid: true,
+        model: graph,
+        cellViewNamespace: appShapes,
+        defaultLink: new appShapes.app.Link(),
+        defaultConnectionPoint: appShapes.app.Link.connectionPoint,
+        interactive: { linkMove: false, vertexAdd: true },
+        async: true,
+        sorting: joint.dia.Paper.sorting.APPROX,
     }));
 
-    // Añade eventos para menús contextuales (clic derecho)
-    paper.on("blank:contextmenu", (evt) => {
-      this.renderContextToolbar({ x: evt.clientX, y: evt.clientY });
+    paper.on("change:position change:size change:source change:target", (cell, opt) => {
+        console.log("Change detected", cell, opt); // Asegúrate de que esto se está llamando
+        this.saveGraphToFirestore(cell, opt);
     });
 
-    paper.on("cell:contextmenu", (cellView, evt) => {
-      this.renderContextToolbar({ x: evt.clientX, y: evt.clientY }, [
-        cellView.model,
-      ]);
-    });
-
-    // Añade líneas de ajustes para mejorar la alineación de elementos
-    this.snaplines = new joint.ui.Snaplines({ paper: paper });
-
-    // Configuración del papel deslizante
+    this.snaplines = new joint.ui.Snaplines({ paper });
     const paperScroller = (this.paperScroller = new joint.ui.PaperScroller({
-      paper,
-      autoResizePaper: true,
-      scrollWhileDragging: true,
-      cursor: "grab",
+        paper,
+        autoResizePaper: true,
+        scrollWhileDragging: true,
+        cursor: "grab",
     }));
 
-    // Renderiza paperScroller en el contenedor especificado
     this.renderPlugin(".paper-container", paperScroller);
     paperScroller.render().center();
 
-    // Añade eventos para el papel y el papel deslizante
-    paper.on("paper:pan", (evt, tx, ty) => {
-      evt.preventDefault();
-      paperScroller.el.scrollLeft += tx;
-      paperScroller.el.scrollTop += ty;
+    paper.on("blank:contextmenu", (evt) => {
+        this.renderContextToolbar({ x: evt.clientX, y: evt.clientY });
     });
 
-    paper.on("paper:pinch", (evt, ox, oy, scale) => {
-      // the default is already prevented
-      const zoom = paperScroller.zoom();
-      paperScroller.zoom(zoom * scale, {
-        min: 0.2,
-        max: 5,
-        ox,
-        oy,
-        absolute: true,
-      });
+    paper.on("cell:contextmenu", (cellView, evt) => {
+        this.renderContextToolbar({ x: evt.clientX, y: evt.clientY }, [ cellView.model ]);
     });
+}
+
+
+  // Método para detener y limpiar Rappid
+  stopRappid() {
+    this.paper.remove();
+    this.paperScroller.remove();
+    this.stencilService.stencil.remove();
+    this.selection.remove();
+    this.toolbarService.toolbar.remove();
+    this.keyboardService.keyboard.stopListening();
+    this.tooltip.remove();
   }
-
   // Inicializa el Stencil (panel de componentes)
 
   initializeStencil() {
     const { stencilService, paperScroller, snaplines } = this;
 
-    // Crea el stencil y lo asocia con el paperScroller y las líneas de ajuste
     stencilService.create(paperScroller, snaplines);
 
-    // Renderiza el stencil en el contenedor especificado
     this.renderPlugin(".stencil-container", stencilService.stencil);
-    // Configura las formas en el stencil
+
     stencilService.setShapes();
 
-     // Evento para capturar cuando se suelta un elemento en el lienzo
     stencilService.stencil.on("element:drop", (elementView) => {
-       // Resetea la selección y añade el nuevo elemento
       this.selection.collection.reset([elementView.model]);
     });
   }
 
   // Inicializa la selección de elementos
   initializeSelection() {
-    this.clipboard = new joint.ui.Clipboard(); // Inicializa el portapapeles
+    this.clipboard = new joint.ui.Clipboard();
     this.selection = new joint.ui.Selection({
-      paper: this.paperScroller, // Asocia el papel deslizante
+      paper: this.paperScroller,
       useModelGeometry: true,
       translateConnectedLinks:
         joint.ui.Selection.ConnectedLinksTranslation.SUBGRAPH,
     });
 
-    // Añade eventos para gestionar cuando la selección cambia
     this.selection.collection.on(
       "reset add remove",
       this.onSelectionChange.bind(this)
@@ -175,8 +202,6 @@ class KitchenSinkService {
 
     const keyboard = this.keyboardService.keyboard;
 
-    // Inicia la selección cuando se hace clic en un área en blanco del papel
-    //mientras se mantiene presionada la tecla Shift.
     this.paper.on("blank:pointerdown", (evt, x, y) => {
       if (keyboard.isActive("shift", evt)) {
         this.selection.startSelecting(evt);
@@ -187,7 +212,6 @@ class KitchenSinkService {
       }
     });
 
-    // Inicia la selección cuando se hace clic en una celda mientras se mantiene presionada la tecla Shift.
     this.paper.on(
       "cell:pointerdown element:magnet:pointerdown",
       (cellView, evt) => {
@@ -198,17 +222,13 @@ class KitchenSinkService {
       }
     );
 
-    // Selecciona un elemento si la tecla CTRL/Meta está presionada mientras se hace clic en el elemento.
     this.paper.on("element:pointerdown", (elementView, evt) => {
-      // Select an element if CTRL/Meta key is pressed while the element is clicked.
       if (keyboard.isActive("ctrl meta", evt)) {
         this.selection.collection.add(elementView.model);
       }
     });
 
-    // Si un elemento se elimina del gráfico, se elimina también de la selección.
     this.graph.on("remove", (cell) => {
-      // If element is removed from the graph, remove from the selection too.
       if (this.selection.collection.has(cell)) {
         this.selection.collection.reset(
           this.selection.collection.models.filter((c) => c !== cell)
@@ -216,11 +236,9 @@ class KitchenSinkService {
       }
     });
 
-    // Añade eventos adicionales para gestionar la selección de elementos.
     this.selection.on(
       "selection-box:pointerdown",
       (elementView, evt) => {
-        // Unselect an element if the CTRL/Meta key is pressed while a selected element is clicked.
         if (keyboard.isActive("ctrl meta", evt)) {
           this.selection.collection.remove(elementView.model);
         }
@@ -271,7 +289,7 @@ class KitchenSinkService {
     } else {
       this.selectPrimaryLink(cellView);
     }
-    this.inspectorService.create(cell); // Crea un inspector para la celda primaria
+    this.inspectorService.create(cell);
   }
 
   // Aplica las herramientas a un elemento primario
@@ -285,10 +303,7 @@ class KitchenSinkService {
       allowOrthogonalResize: element.get("allowOrthogonalResize") !== false,
     }).render();
 
-    //--------------------------------------------------------------------------------------------------------------------
-
-    //I M P O R T A N T E     C O D I G O   P A R A   C O M P R E N D E R
-    this.haloService.create(elementView); // Crea un halo alrededor del elemento
+    this.haloService.create(elementView); // Asegura que el halo está correctamente configurado
   }
 
   // Aplica las herramientas a un enlace primario
